@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType><TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF><Nullable>enable</Nullable><ImplicitUsings>enable</ImplicitUsings>
+    <PlatformTarget>x64</PlatformTarget><AssemblyName>Sietom.RFID.PartsBox</AssemblyName>
+    <ApplicationIcon>Assets/sietom.ico</ApplicationIcon>
+    <DefaultItemExcludes>$(DefaultItemExcludes);Aplikacja*/**</DefaultItemExcludes>
+  </PropertyGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="sql/03_Import_plikow_i_ilosci.sql" LogicalName="PartsBox.ImportSchema.sql" />
+    <Resource Include="Assets/sietom.png" />
+    <Resource Include="Assets/sietom.ico" />
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="7.0.2" />
+    <Reference Include="Symbol.RFID3.Host"><HintPath>../Zebra RFID FXSeries Host .NET SDK/SDK/Symbol.RFID3.Host.dll</HintPath></Reference>
+    <Content Include="../Zebra RFID FXSeries Host .NET SDK/Driver/64bits/RFIDAPI32PC.dll" Link="RFIDAPI32PC.dll" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="appsettings.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>
