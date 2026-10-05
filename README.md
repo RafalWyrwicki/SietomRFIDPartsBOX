@@ -37,7 +37,7 @@ Odczyt RFID korzysta wyłącznie z EPC. TID nie jest wymagany ani pobierany.
 
 ## FX7500
 
-Program korzysta z Zebra RFID FXSeries Host .NET SDK. `ReaderAddressMode` może mieć wartość `Host`, `IP` albo `Auto`; w trybie `Auto` program próbuje hosta, a następnie adresu IP.
+Program korzysta z Zebra RFID FXSeries Host .NET SDK. `ReaderAddressMode` ustaw na `Host`, aby łączyć się z FX7500 po nazwie `FX75005D0A26`. Czytnik kart pozostaje urządzeniem USB i jest ustawiany osobno przez `CardReaderDeviceId`.
 
 ## Budowanie i testy
 
@@ -52,3 +52,4 @@ Testy automatyczne mogą wymagać działającego SQL oraz FX7500. Wyniki testów
 ## Wersja bazowa
 
 Katalog źródłowy nie zawiera wyników kompilacji, raportów testowych ani kopii konfiguracji. Wersja produkcyjna wymaga jeszcze adaptera SAP, autoryzacji API, zarządzania sekretami, uprawnień magazynowych i testów integracyjnych z klientem.
+
