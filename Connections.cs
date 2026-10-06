@@ -40,7 +40,14 @@ public sealed partial class MainViewModel
  async Task CheckSql(bool initialize)
  {
   try{if(initialize||!sqlInitialized){await db.Initialize(settings.DemoMode);sqlInitialized=true;}else await db.Ping();sqlReady=true;Sql="SQL: połączony";sqlError="";}
-  catch(Exception ex){sqlReady=false;Sql="SQL: brak połączenia";sqlError="Brak połączenia z bazą SQL. Sprawdź sieć i usługę SQL Server.";LogCloseError(ex);}
+  catch(Exception ex)
+  {
+   sqlReady=false;Sql="SQL: błąd";
+   sqlError=ex is InvalidOperationException && ex.Message.StartsWith("Brak tabel bazy:",StringComparison.Ordinal)
+    ? ex.Message+" Uruchom skrypt sql/01_Odtworz_pusta_baze.sql na serwerze docelowym."
+    : "Brak połączenia z bazą SQL. Sprawdź sieć i usługę SQL Server.";
+   LogCloseError(ex);
+  }
  }
  async Task CheckCard()
  {

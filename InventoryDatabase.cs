@@ -14,12 +14,7 @@ public sealed partial class Database
   using(var header=Cmd(c,"INSERT Operations VALUES(@id,'Inventory',@e,NULL,NULL,SYSUTCDATETIME(),N'Raport inwentaryzacyjny')",t,("@id",id),("@e",employee.Id)))await header.ExecuteNonQueryAsync();
   foreach(var row in rows)
   {
-   using var q=Cmd(c,"""
-    IF COL_LENGTH('dbo.InventoryReadings','Tid') IS NOT NULL
-      INSERT InventoryReadings(OperationId,Epc,Tid,Material,Name,Status) VALUES(@id,@epc,N'',@material,@name,@status);
-    ELSE
-      INSERT InventoryReadings(OperationId,Epc,Material,Name,Status) VALUES(@id,@epc,@material,@name,@status);
-    """,t,("@id",id),("@epc",row.EPC),("@material",row.Indeks),("@name",row.Nazwa),("@status",row.Status));await q.ExecuteNonQueryAsync();
+   using var q=Cmd(c,"INSERT InventoryReadings(OperationId,Epc,Material,Name,Status) VALUES(@id,@epc,@material,@name,@status);",t,("@id",id),("@epc",row.EPC),("@material",row.Indeks),("@name",row.Nazwa),("@status",row.Status));await q.ExecuteNonQueryAsync();
   }
   using(var audit=Cmd(c,"INSERT Audit(EmployeeId,Event,Details) VALUES(@e,'InventoryConfirmed',@id)",t,("@e",employee.Id),("@id",id.ToString())))await audit.ExecuteNonQueryAsync();
   t.Commit();

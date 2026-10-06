@@ -117,18 +117,7 @@ public sealed partial class Database(string connectionString)
    using var q=Cmd(c,"SELECT State FROM Parts WITH(UPDLOCK,HOLDLOCK) WHERE Epc=@epc",t,("@epc",epc));var state=await q.ExecuteScalarAsync() as string??throw new InvalidOperationException($"Nieznany EPC: {epc}");
    if(kind=="Issue"&&state!="Available")throw new InvalidOperationException($"Część niedostępna: {epc}");
    if(kind=="Return") { using var v=Cmd(c,"SELECT COUNT(*) FROM Items WHERE OperationId=@s AND Epc=@epc",t,("@s",source),("@epc",epc));if(state!="Issued"||(int)(await v.ExecuteScalarAsync())!!=1)throw new InvalidOperationException($"EPC nie może być zwrócony z tego pobrania: {epc}"); }
-   // Starsze bazy miały obowiązkową kolumnę Items.Status. Obsługujemy oba warianty schematu.
-   var itemStatus=kind=="Issue"?"Issued":kind=="Return"?"Returned":"Available";
-   using var item=Cmd(c,"""
-    IF COL_LENGTH('dbo.Items','Tid') IS NOT NULL AND COL_LENGTH('dbo.Items','Status') IS NOT NULL
-      INSERT Items(OperationId,Epc,Tid,Material,Name,Status) SELECT @id,Epc,N'',Material,Name,@itemStatus FROM Parts WHERE Epc=@epc;
-    ELSE IF COL_LENGTH('dbo.Items','Tid') IS NOT NULL
-      INSERT Items(OperationId,Epc,Tid,Material,Name) SELECT @id,Epc,N'',Material,Name FROM Parts WHERE Epc=@epc;
-    ELSE IF COL_LENGTH('dbo.Items','Status') IS NOT NULL
-      INSERT Items(OperationId,Epc,Material,Name,Status) SELECT @id,Epc,Material,Name,@itemStatus FROM Parts WHERE Epc=@epc;
-    ELSE
-      INSERT Items(OperationId,Epc,Material,Name) SELECT @id,Epc,Material,Name FROM Parts WHERE Epc=@epc;
-    """,t,("@id",id),("@epc",epc),("@itemStatus",itemStatus));await item.ExecuteNonQueryAsync();
+   using var item=Cmd(c,"INSERT Items(OperationId,Epc,Material,Name) SELECT @id,Epc,Material,Name FROM Parts WHERE Epc=@epc;",t,("@id",id),("@epc",epc));await item.ExecuteNonQueryAsync();
    if(kind!="Inventory") {using var update=Cmd(c,"UPDATE Parts SET State=@s WHERE Epc=@epc",t,("@s",kind=="Issue"?"Issued":"ReturnPending"),("@epc",epc));await update.ExecuteNonQueryAsync();}
   }
   if(kind=="Issue") {using var q=Cmd(c,"INSERT Outbox(OperationId,Status) VALUES(@id,'Disabled')",t,("@id",id));await q.ExecuteNonQueryAsync();}

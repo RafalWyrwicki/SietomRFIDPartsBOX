@@ -29,10 +29,23 @@ public sealed partial class MainViewModel : Observable
  public string Card {get=>card;set=>Set(ref card,value);}
  public string EPC {get=>epc;set=>Set(ref epc,value);}
  public string Search {get=>search;set{Set(ref search,value);Changed(nameof(FilteredOrders));}}
+ bool numericKeyboardVisible;
+ bool numericKeyboardForReturn;
+ public bool NumericKeyboardVisible { get=>numericKeyboardVisible; private set=>Set(ref numericKeyboardVisible,value); }
+ public void ShowNumericKeyboard(bool forReturn=false){numericKeyboardForReturn=forReturn;NumericKeyboardVisible=true;}
+ public void HideNumericKeyboard()=>NumericKeyboardVisible=false;
+ public void NumericKey(string key)
+ {
+  var value=numericKeyboardForReturn?ReturnSearch:Search;
+  if(key=="⌫"){if(value.Length>0)value=value[..^1];}
+  else if(key=="Wyczyść")value="";
+  else if(value.Length<11&&key.Length==1&&char.IsDigit(key[0]))value+=key;
+  if(numericKeyboardForReturn)ReturnSearch=value;else Search=value;
+ }
  string orderLocation="Wszystkie";
  public string OrderLocation {get=>orderLocation;set{Set(ref orderLocation,value);SelectedOrder=null;Changed(nameof(FilteredOrders));}}
- public IEnumerable<string> OrderLocations=>new[]{"Wszystkie"}.Concat(Orders.Select(o=>o.FunctionalLocation).Where(s=>s.Length>0).Distinct().Order());
- public IEnumerable<Order> FilteredOrders=>Orders.Where(o=>o.ToString().Contains(Search.Trim(),StringComparison.OrdinalIgnoreCase)&&(OrderLocation=="Wszystkie"||o.FunctionalLocation==OrderLocation));
+ public IEnumerable<string> OrderLocations=>new[]{"Wszystkie"}.Concat(Orders.Select(o=>o.FunctionalLocation.Trim()).Where(s=>s.Length>0).Select(s=>s.Length>13?s[..13]:s).Distinct().Order());
+ public IEnumerable<Order> FilteredOrders=>Orders.Where(o=>o.ToString().Contains(Search.Trim(),StringComparison.OrdinalIgnoreCase)&&(OrderLocation=="Wszystkie"||o.FunctionalLocation.StartsWith(OrderLocation,StringComparison.OrdinalIgnoreCase)));
  public Order? SelectedOrder {get=>selectedOrder;set{if(!scanning)Set(ref selectedOrder,value);}}
  public Receipt? SelectedReceipt {get=>selectedReceipt;set{if(!scanning)Set(ref selectedReceipt,value);}}
  public DateTime From {get;set;}=DateTime.Today.AddDays(-7);

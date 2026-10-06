@@ -3,9 +3,11 @@ namespace PartsBox;
 public partial class MainWindow : Window
 {
  bool closing,closeInProgress;
+ readonly System.Windows.Media.TranslateTransform NumericKeyboardTransform=new();
+ bool draggingKeyboard; System.Windows.Point keyboardStart; double keyboardX,keyboardY; System.Windows.Controls.Border? draggingElement; readonly Dictionary<System.Windows.Controls.Border,System.Windows.Media.TranslateTransform> keyboardTransforms=[];
  public MainWindow(MainViewModel vm,bool autoBoot=true)
  {
-  InitializeComponent();DataContext=vm;
+  InitializeComponent();NumericKeyboard.RenderTransform=NumericKeyboardTransform;DataContext=vm;
   vm.Notice+=message=>new OperationConfirmationWindow(message){Owner=this}.ShowDialog();
   vm.IssueConfirmed+=quantity=>new OperationConfirmationWindow(false,quantity){Owner=this}.ShowDialog();
   vm.ReturnConfirmed+=quantity=>new OperationConfirmationWindow(true,quantity){Owner=this}.ShowDialog();
@@ -46,6 +48,13 @@ public partial class MainWindow : Window
   Closed+=(_,_)=>cardPause.Stop();
  }
  void CloseButton_Click(object sender,RoutedEventArgs e)=>Close();
+ void OrderSearch_GotFocus(object sender,RoutedEventArgs e){if(DataContext is MainViewModel vm)vm.ShowNumericKeyboard();}
+ void ReturnSearch_GotFocus(object sender,RoutedEventArgs e){if(DataContext is MainViewModel vm)vm.ShowNumericKeyboard(true);}
+ void NumericKey_Click(object sender,RoutedEventArgs e){if(DataContext is MainViewModel vm&&sender is System.Windows.Controls.Button b)vm.NumericKey(b.Content?.ToString()??"");}
+ void NumericKeyboard_Close(object sender,RoutedEventArgs e){if(DataContext is MainViewModel vm)vm.HideNumericKeyboard();}
+ void NumericKeyboard_MouseDown(object sender,System.Windows.Input.MouseButtonEventArgs e){if(e.OriginalSource is System.Windows.Controls.Button||sender is not System.Windows.Controls.Border b)return;draggingKeyboard=true;draggingElement=b;keyboardStart=e.GetPosition(this);if(!keyboardTransforms.TryGetValue(b,out var transform)){transform=new();keyboardTransforms[b]=transform;b.RenderTransform=transform;}keyboardX=transform.X;keyboardY=transform.Y;b.CaptureMouse();e.Handled=true;}
+ void NumericKeyboard_MouseMove(object sender,System.Windows.Input.MouseEventArgs e){if(!draggingKeyboard||draggingElement is null)return;var p=e.GetPosition(this);keyboardX+=p.X-keyboardStart.X;keyboardY+=p.Y-keyboardStart.Y;keyboardStart=p;var transform=keyboardTransforms[draggingElement];transform.X=keyboardX;transform.Y=keyboardY;}
+ void NumericKeyboard_MouseUp(object sender,System.Windows.Input.MouseButtonEventArgs e){draggingKeyboard=false;draggingElement?.ReleaseMouseCapture();draggingElement=null;}
  static bool FocusCancel(DependencyObject root,MainViewModel vm)
  {
   for(int i=0;i<System.Windows.Media.VisualTreeHelper.GetChildrenCount(root);i++)
