@@ -45,7 +45,7 @@ public sealed partial class MainViewModel : Observable
  string orderLocation="Wszystkie";
  public string OrderLocation {get=>orderLocation;set{Set(ref orderLocation,value);SelectedOrder=null;Changed(nameof(FilteredOrders));}}
  public IEnumerable<string> OrderLocations=>new[]{"Wszystkie"}.Concat(Orders.Select(o=>o.FunctionalLocation.Trim()).Where(s=>s.Length>0).Select(s=>s.Length>13?s[..13]:s).Distinct().Order());
- public IEnumerable<Order> FilteredOrders=>Orders.Where(o=>o.ToString().Contains(Search.Trim(),StringComparison.OrdinalIgnoreCase)&&(OrderLocation=="Wszystkie"||o.FunctionalLocation.StartsWith(OrderLocation,StringComparison.OrdinalIgnoreCase)));
+ public IEnumerable<Order> FilteredOrders=>Orders.Where(o=>o.Number.Contains(Search.Trim(),StringComparison.OrdinalIgnoreCase)&&(OrderLocation=="Wszystkie"||o.FunctionalLocation.StartsWith(OrderLocation,StringComparison.OrdinalIgnoreCase)));
  public Order? SelectedOrder {get=>selectedOrder;set{if(!scanning)Set(ref selectedOrder,value);}}
  public Receipt? SelectedReceipt {get=>selectedReceipt;set{if(!scanning)Set(ref selectedReceipt,value);}}
  public DateTime From {get;set;}=DateTime.Today.AddDays(-7);
