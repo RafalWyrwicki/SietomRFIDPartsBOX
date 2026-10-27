@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="src/Sietom.AccessControl.Worker/Sietom.AccessControl.Worker.csproj" />
+  <Project Path="tests/Sietom.AccessControl.Tests/Sietom.AccessControl.Tests.csproj" />
+</Solution>

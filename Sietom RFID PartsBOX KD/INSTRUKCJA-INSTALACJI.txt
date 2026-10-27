@@ -1,0 +1,206 @@
+﻿SIETOM KD — INSTRUKCJA INSTALACJI I OBSŁUGI
+Aktualizacja: 27.10.2026 — wersja KD 1.0.27
+
+1. CO I GDZIE INSTALOWAĆ
+
+KD pobiera użytkowników i karty z API PRD klienta do istniejącej bazy
+SietomPartsBox, w tym dbo.Employees. 
+
+Serwer: TSASRVW25RFID.tsa.local / 10.0.207.5.
+Konto instalacji i usługi: TSA\rwyrwicki.
+SQL: instancja domyślna MSSQLSERVER, TCP 51433, baza SietomPartsBox.
+Połączenie KD: Server=tcp:10.0.207.5,51433; Database=SietomPartsBox; Windows Authentication; Encrypt=False; TrustServerCertificate=False.
+KD wymaga logowania Windows. Nie wpisuj tu loginu SQL sql_sietom ani jego hasła.
+Login sql_sietom służy osobnej aplikacji PartsBOX na laptopie; nie zmienia konta usługi KD.
+Folder programu: C:\Services\SietomAccessControl.
+Nazwa usługi Windows: SietomAccessControl.
+
+KD instalujemy TYLKO na serwerze klienta. PartsBOX jest osobną aplikacją
+stanowiskową i nie musi być otwarta do synchronizacji. Rozłączenie RDP
+nie zatrzymuje usługi. Serwer 192.168.100.96 to środowisko testowe autora.
+
+2. POTWIERDZONY STAN NA 27.10.2026
+
+Po zmianie portu KD z 1433 na 51433 i restarcie usługi odczytano bezpośrednio
+z bazy dwa kolejne automatyczne importy PRD:
+  - 27.10.2026 07:53:34 czasu polskiego: Succeeded, 3897 kart;
+  - 27.10.2026 07:55:36 czasu polskiego: Succeeded, 3898 kart.
+Oba bez błędów i konfliktów. Lista ma status aktualnej. Liczba kart może zmieniać
+się w kolejnych importach i nie jest oczekiwaną stałą.
+
+Usługa na serwerze działa jako TSA\rwyrwicki. Nie ma potrzeby ponownej instalacji
+wyłącznie z powodu przygotowania tej paczki. Jest to aktualna wersja do przyszłej
+instalacji, aktualizacji lub odtworzenia. Końcowy test fizycznego przyłożenia
+karty do czytnika PartsBOX pozostaje do wykonania przez operatora.
+
+3. PRZYGOTOWANIE
+
+1) W SSMS wykonaj kopię zapasową SietomPartsBox. Uzgodnij przerwę pracy stanowisk.
+2) Zaloguj się przez RDP na TSASRVW25RFID jako TSA\rwyrwicki.
+3) Administrator klienta musi zapewnić temu kontu:
+   - administratora Windows do instalacji;
+   - prawo „Log on as a service” (Zaloguj jako usługa);
+   - dostęp do SietomPartsBox i wykonania aktualizacji schematu SQL.
+   Błąd 1069 / zdarzenie 7041 oznaczał brak prawa logowania jako usługa.
+   Samo sysadmin w SQL nie nadaje tego prawa Windows.
+4) Wymagane połączenia: HTTPS 443 do sso.tarczynski.pl oraz
+   integration-api.tarczynski.pl i SQL TCP 51433.
+   Paczka zawiera runtime .NET dla Windows x64.
+
+4. PACZKA — SKOPIUJ I ROZPAKUJ CAŁOŚĆ
+
+Z komputera autora skopiuj jedyny instalator KD:
+  publish\KD-INSTALACJA-10.0.207.5.zip
+
+Rozpakuj całą zawartość na serwerze do:
+  C:\Sietom\KD-INSTALACJA-10.0.207.5
+
+Bezpośrednio w tym folderze muszą być Instaluj-KD.ps1,
+Sietom.AccessControl.Worker.exe, Sietom.AccessControl.Worker.dll i appsettings.json.
+Zachowaj wszystkie biblioteki i podfoldery, w tym sql. Nie kopiuj samego EXE.
+Nie uruchamiaj z wnętrza ZIP. Nie dodawaj zagnieżdżonego folderu o tej samej nazwie.
+
+PartsBOX-KLIENT-...zip zawiera aplikację stanowiskową, a nie instalator KD.
+Jest przechowywana oddzielnie w katalogu publish głównego projektu PartsBOX.
+
+5. SEKRET — TYLKO JEŚLI NIE MA JESZCZE DZIAŁAJĄCEJ KONFIGURACJI
+
+Przy aktualizacji zachowywane są appsettings.Local.json i wskazany w nim
+chroniony sekret. Nie twórz ich ponownie.
+
+Przy nowej instalacji umieść NA SERWERZE plik zawierający wyłącznie
+produkcyjny sekret w jednym wierszu:
+  C:\Services\SietomAccessControl\secrets\OAuth2.txt
+
+Instalator odczyta go i zabezpieczy pod kontem TSA\rwyrwicki na tym serwerze.
+Plik .secret zapisze w C:\ProgramData\SietomAccessControl\secrets.
+Sekret zabezpieczony na laptopie albo pod innym kontem nie zastąpi tego pliku.
+Nie pakuj sekretu do ZIP i nie wysyłaj go w poczcie ani zrzutach ekranu.
+Nie usuwaj aktywnego .secret ani appsettings.Local.json podczas aktualizacji.
+
+6. URUCHOMIENIE INSTALATORA — NOWA INSTALACJA LUB AKTUALIZACJA
+
+Na SERWERZE otwórz Windows PowerShell jako administrator pod TSA\rwyrwicki:
+
+  Set-Location 'C:\Sietom\KD-INSTALACJA-10.0.207.5'
+  powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Instaluj-KD.ps1
+
+Przy tworzeniu nowej usługi podaj na żądanie hasło konta WINDOWS TSA\rwyrwicki.
+To nie jest hasło SQL ani sekret OAuth. Przy aktualizacji istniejącej usługi
+instalator nie prosi ponownie o hasło.
+
+Instalator w tej kolejności:
+  a) sprawdza komputer, konto i pliki;
+  b) zatrzymuje poprzednią usługę i zapisuje kopię konfiguracji/programu w backups;
+  c) kopiuje program do C:\Services\SietomAccessControl;
+  d) zachowuje lub przygotowuje sekret i ustawia PRD oraz SQL tcp:10.0.207.5,51433;
+  e) sprawdza odczyt sekretu i aktualizuje schemat istniejącej SietomPartsBox;
+  f) próbuje pobrać i zapisać listę;
+  g) instaluje/aktualizuje usługę, ustawia start automatyczny i uruchamia ją.
+
+JEDEN SQL: sql\04_Integracja_KD.sql. Jest też osadzony w programie i wykonywany
+przez instalator. Nie trzeba wykonywać go dodatkowo w SSMS.
+Nie twórz nowej bazy SietomAccessControl. Nie uruchamiaj starych poprawek 05–07.
+Nie uruchamiaj skryptów odtwarzania/testowania bazy 01 i 02 na bazie klienta.
+SQL 03 głównej aplikacji służy importom materiałów/zleceń, nie instalacji KD.
+
+HTTP 500 lub błąd sieci: instalator może ostrzec i uruchomić usługę z ponawianiem.
+Nie oznacza to udanego importu. Błędy konfiguracji, uprawnień, SQL lub danych
+wymagają usunięcia przyczyny i ponowienia tego samego instalatora.
+
+7. POTWIERDZENIE DZIAŁANIA
+
+Na serwerze w PowerShell:
+
+  Get-Service SietomAccessControl
+
+Oczekiwany status: Running. Nie uruchamiaj dodatkowego workera ręcznie.
+Na serwerze w SSMS połącz się z tcp:10.0.207.5,51433 przez Windows Authentication i wykonaj:
+
+  USE SietomPartsBox;
+  SELECT TOP (20)
+      StartedUtc, FinishedUtc, Status, SourceRecordCount, DownloadedCount,
+      ConflictingCardCount, IdenticalDuplicateCount, ErrorCode
+  FROM dbo.AccessCardSyncRuns
+  ORDER BY StartedUtc DESC;
+
+Running potwierdza działającą usługę. Nowe kolejne wpisy Succeeded potwierdzają
+rzeczywistą synchronizację. Domyślnie następna próba następuje po 120 sekundach
+od końca poprzedniej. Sprawdź historię ponownie po około 3 minutach.
+Daty StartedUtc/FinishedUtc są w UTC. 27.10.2026 czas polski to UTC + 1 godzina.
+Latem przesunięcie wynosi +2 godziny; uwzględniaj zmianę czasu.
+
+Raport spornych kart:
+
+  USE SietomPartsBox;
+  SELECT * FROM dbo.AccessCardConflicts
+  WHERE Environment = 'PRD' AND ResolvedUtc IS NULL;
+
+Sporna karta jest blokowana; pozostałe mogą zostać poprawnie zapisane.
+Błąd API zachowuje ostatnią poprawną listę. Do następnego sukcesu program nie
+pozna nowych zmian kart. Aktualny PartsBOX sygnalizuje opóźnienie po 10 minutach,
+ale sam brak aktualizacji nie blokuje kart dopuszczonych na ostatniej liście.
+
+8. DIAGNOSTYKA BEZ ZMIANY DANYCH
+
+Na serwerze, pod TSA\rwyrwicki:
+
+  powershell.exe -NoProfile -ExecutionPolicy Bypass -File 'C:\Services\SietomAccessControl\Sprawdz-API-KD.ps1'
+
+Skrypt jest w paczce i instalator kopiuje go do programu. Przy istniejącej
+instalacji można skopiować tylko Sprawdz-API-KD.ps1 z paczki do folderu programu,
+bez ponownej instalacji usługi.
+Test nie zmienia SQL, konfiguracji ani usługi. Pokazuje statusy SSO/API,
+deklarowany scope/audience i identyfikatory żądań; nie pokazuje sekretu,
+tokenu ani danych pracowników. HTTP 200 API nie zastępuje Succeeded w SQL.
+
+SSO 200 + API 500: przekaż administratorowi API czas UTC i X-Correlation-Id.
+Nie trzeba uruchamiać PartsBOX ani ponownie przygotowywać sekretu.
+Po przywróceniu API usługa powinna pobrać listę w kolejnym cyklu.
+Potwierdź to nowym wpisem Succeeded w SQL.
+
+9. CO ZACHOWAĆ NA SERWERZE
+
+Aktywny program: C:\Services\SietomAccessControl wraz z bibliotekami i konfiguracją.
+Chroniony sekret: C:\ProgramData\SietomAccessControl\secrets.
+Folder backups zawiera poprzedni program i konfigurację — nie jest kopią bazy SQL.
+Zachowaj kopię SQL i paczkę instalacyjną do odtworzenia instalacji.
+Folder rozpakowania w C:\Sietom nie jest aktywnym folderem programu.
+
+10. KONTROLA USŁUGI I BRAKU NOWYCH PRÓB
+
+Na serwerze przez RDP:
+
+  Get-CimInstance Win32_Service -Filter "Name='SietomAccessControl'" |
+      Select-Object Name, State, StartName, PathName, ProcessId | Format-List
+
+Oczekujemy Running, TSA\rwyrwicki, pliku
+C:\Services\SietomAccessControl\Sietom.AccessControl.Worker.exe i ProcessId > 0.
+
+Jeśli w SQL nie przybywa ŻADNYCH prób, nawet Failed, sprawdź usługę, włączenie
+synchronizacji i jej dostęp do SQL. Brak nowych wpisów nie dowodzi błędu API.
+Właśnie nieaktualny port 1433 zatrzymał zapisywanie prób po 20.10.2026;
+27.10.2026 po zmianie na 51433 synchronizacja ponownie działała.
+
+Konfigurację SQL KD sprawdzisz bez pokazywania sekretu:
+
+  $c = Get-Content 'C:\Services\SietomAccessControl\appsettings.Local.json' -Raw | ConvertFrom-Json
+  Add-Type -AssemblyName System.Data
+  $b = [Data.SqlClient.SqlConnectionStringBuilder]::new($c.Sql.ConnectionString)
+  [pscustomobject]@{
+      Environment = $c.Sync.Environment
+      SyncEnabled = $c.Sync.Enabled
+      SqlServer = $b.DataSource
+      SqlDatabase = $b.InitialCatalog
+      WindowsAuthentication = $b.IntegratedSecurity
+  } | Format-List
+
+Oczekujemy: PRD, True, tcp:10.0.207.5,51433, SietomPartsBox, True.
+Hasła konta Windows nie zapisujemy w JSON. Sekret OAuth wskazany w pliku Local
+pozostaje chroniony przez DPAPI pod tym samym kontem Windows na tym serwerze.
+
+Jeśli nowy wpis ma Failed / ApiHttp500, uruchom diagnostykę API z rozdziału 8.
+Jeśli lista jest aktualna, a karta nie loguje, sprawdź kartę w aktualnej liście,
+konflikty i format numeru wysyłanego przez czytnik USB. Samo wykrycie USB nie
+potwierdza poprawnego logowania. Nie dopisuj ręcznie uprawnień do karty bez
+potwierdzenia jej właściciela i statusu w systemie klienta.

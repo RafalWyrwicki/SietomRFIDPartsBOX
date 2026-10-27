@@ -1,0 +1,22 @@
+﻿ODTWORZENIE KATALOGU KD Z REPOZYTORIUM PARTSBOX
+
+Gotowa instalacja znajduje sie w publish/KD-INSTALACJA-10.0.207.5.zip.
+Zawiera runtime, jeden SQL i instrukcje. Nie wymaga kompilowania ani zmiany ukladu repozytorium.
+
+Zrodla KD zachowuja oryginalne sciezki wzgledne z lokalnego projektu autora:
+  katalog nadrzedny/
+    Sietom RFID PartsBOX/           (projekt aplikacji stanowiskowej i sql/04_Integracja_KD.sql)
+    Sietom RFID PartsBOX KD/        (ten katalog: src, tests, deploy)
+    Zebra RFID FXSeries Host .NET SDK/ (SDK wymagane przez projekt aplikacji w testach)
+
+Do kompilacji worker wymaga wspolnego sql/04_Integracja_KD.sql z projektu PartsBOX.
+Ten SQL jest zapisany takze w glownym katalogu sql tego repozytorium.
+Przy odtwarzaniu ukladu roboczego umiesc KD obok katalogu aplikacji nazwanego
+Sietom RFID PartsBOX, jak powyzej. Instrukcja budowania znajduje sie w README.md.
+Testy integracyjne korzystaja rowniez z kodu logowania aplikacji PartsBOX;
+wymagaja zgodnej wersji aplikacji z integracja KD i lokalnego SDK Zebra.
+
+Ta publikacja obejmuje KD, wspolny SQL i gotowy instalator. Nie obejmuje pozostalych
+niezatwierdzonych zmian aplikacji stanowiskowej z komputera autora.
+Nie zawiera plikow secrets, produkcyjnego OAuth2.txt, .secret, lokalnych konfiguracji
+ani hasel SQL. Sekret API przygotowuje sie dopiero na serwerze podczas instalacji.
